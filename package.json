@@ -1,23 +1,13 @@
 {
-  "name": "simple-web-app",
+  "name": "bmw-property-bank",
   "version": "1.0.0",
-  "description": "Simple Node.js + Express web app with small API",
+  "description": "BMW's Property Banking Application",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "start:dev": "NODE_ENV=development node server.js",
-    "lint": "eslint . --ext .js",
-    "test": "node -e \"console.log('no tests yet')\"",
-    "build": "echo build step (no frontend build)"
+    "test": "echo \"No tests yet\""
   },
   "dependencies": {
-    "express": "^4.18.2"
-  },
-  "devDependencies": {
-    "eslint": "^8.46.0"
-  },
-  "engines": {
-    "node": ">=18"
+    "express": "4.16.0"
   }
 }
-
