@@ -1,13 +1,13 @@
 {
-  "name": "bmw-property-bank",
+  "name": "bmw-property",
   "version": "1.0.0",
-  "description": "BMW's Property Banking Application",
+  "description": "BMW's Property - Secure Bank Web App",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "test": "echo \"No tests yet\""
   },
   "dependencies": {
-    "express": "4.16.0"
+    "express": "4.16.4"
   }
 }
