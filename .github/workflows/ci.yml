@@ -1,28 +1,36 @@
-name: Secure CI Pipeline - BMW Property Bank
+name: Secure CI/CD Pipeline
 
 on:
   push:
     branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
 
 jobs:
-  security-pipeline:
+  security:
     runs-on: ubuntu-latest
 
     steps:
+      # 1️⃣ Checkout code
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # 2️⃣ Setup Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 18
 
+      # 3️⃣ Install dependencies
       - name: Install dependencies
         run: npm install
 
-      - name: Run Snyk Security Scan
-        uses: snyk/actions/node@master
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          args: test
+      # 4️⃣ Run app in background (needed for OWASP ZAP)
+      - name: Start application
+        run: |
+          npm start &
+          sleep 10
+
+      # 5️⃣ Snyk Dependency Scan
+      - name: Snyk Dependency Scan
+        uses: snyk/acti
