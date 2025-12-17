@@ -8,6 +8,22 @@
     "test": "echo \"No tests yet\""
   },
   "dependencies": {
-    "express": "4.16.4"
-  }
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^4.22.1",
+    "jsonwebtoken": "^9.0.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/B-Wendy/secure-web-app-cicd.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/B-Wendy/secure-web-app-cicd/issues"
+  },
+  "homepage": "https://github.com/B-Wendy/secure-web-app-cicd#readme"
 }

@@ -1,44 +1,39 @@
+require("dotenv").config();
 const express = require("express");
-const bodyParser = require("body-parser");
-const path = require("path");
-const users = require("./data/users");
+const jwt = require("jsonwebtoken");
 
 const app = express();
-const PORT = process.env.PORT || 3000;
 
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(express.static("public"));
+// 👇 MUST be before routes
+app.use(express.json());
 
-// LOGIN
+// 🔐 LOGIN ROUTE (PASTE THIS HERE)
 app.post("/login", (req, res) => {
   const { username, password } = req.body;
 
-  const user = users.find(
-    u => u.username === username && u.password === password
-  );
-
-  if (!user) {
-    return res.send("❌ Invalid credentials");
+  if (username !== "customer" || password !== "bank123") {
+    return res.status(401).json({ message: "Invalid credentials" });
   }
 
-  // Simple interest calculation
-  const interest = user.balance * user.interestRate;
+  const token = jwt.sign(
+    { username },
+    process.env.JWT_SECRET || "dev_secret",
+    { expiresIn: "1h" }
+  );
 
-  res.send(`
-    <h1>🏦 Account Dashboard</h1>
-    <p><strong>User:</strong> ${user.username}</p>
-    <p><strong>Balance:</strong> $${user.balance}</p>
-    <p><strong>Last Withdrawal:</strong> $${user.lastWithdrawal.amount} on ${user.lastWithdrawal.date}</p>
-    <p><strong>Interest Earned:</strong> $${interest.toFixed(2)}</p>
-    <a href="/dashboard.html">View Dashboard</a>
-  `);
+  res.json({ token });
 });
 
-// Health endpoint (CI/CD + Render)
-app.get("/health", (req, res) => {
-  res.json({ status: "healthy" });
+// 🏦 BANK ROUTES
+app.use("/api/account", require("./routes/account"));
+
+// ✅ HEALTH CHECK
+app.get("/", (req, res) => {
+  res.json({ message: "Bank API running securely" });
 });
 
+// 🚀 START SERVER
+const PORT = 3000;
 app.listen(PORT, () => {
-  console.log(`🏦 Bank app running on port ${PORT}`);
+  console.log(`Server running on http://localhost:${PORT}`);
 });
