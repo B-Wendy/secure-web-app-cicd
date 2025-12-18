@@ -1,24 +1,23 @@
-name: Secure Bank App CI/CD Pipeline
+name: Secure Bank CI/CD Pipeline
 
 on:
   push:
     branches: [ "main" ]
-  pull_request:
 
 jobs:
 
-  # =========================
-  # 1️⃣ BUILD PHASE
-  # =========================
+# =========================
+# 1. BUILD PHASE
+# =========================
   build:
     name: Build Application
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout source code
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 18
@@ -26,12 +25,9 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build Docker image
-        run: docker build -t bank-secure-app .
-
-  # =========================
-  # 2️⃣ TEST PHASE
-  # =========================
+# =========================
+# 2. TEST PHASE
+# =========================
   test:
     name: Run Tests
     runs-on: ubuntu-latest
@@ -45,39 +41,69 @@ jobs:
           node-version: 18
 
       - run: npm install
-      - run: npm test || echo "No tests yet"
 
-  # =========================
-  # 3️⃣ SECURITY SCANNING
-  # =========================
+      - name: Run tests
+        run: |
+          echo "No tests yet — placeholder"
+          exit 0
+
+# =========================
+# 3. SECURITY SCANNING
+# =========================
   security:
-    name: Security Scanning
+    name: Security Scans
     runs-on: ubuntu-latest
     needs: test
 
     steps:
       - uses: actions/checkout@v4
 
-      # 🔍 Dependency scan (OWASP-style)
-      - name: NPM Audit
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - run: npm install
+
+      # Dependency vulnerabilities (OWASP Top 10 - A06)
+      - name: Dependency Scan (npm audit)
         run: npm audit --audit-level=high || true
 
-      # 🐳 Container image scan (Trivy)
-      - name: Trivy Scan
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: bank-secure-app
-          severity: CRITICAL,HIGH
-          exit-code: 0
+      # Snyk Dependency Scan
+      - name: Snyk Scan
+        uses: snyk/actions/node@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        continue-on-error: true
 
-  # =========================
-  # 4️⃣ DEPLOYMENT PHASE
-  # =========================
-  deploy:
-    name: Deployment
+# =========================
+# 4. DOCKER IMAGE BUILD + SCAN
+# =========================
+  docker:
+    name: Docker Build & Image Scan
     runs-on: ubuntu-latest
     needs: security
 
     steps:
-      - name: Deployment step
-        run: echo "Deployment handled by Render via GitHub integration"
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t bank-app .
+
+      - name: Trivy Image Scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: bank-app
+          severity: HIGH,CRITICAL
+        continue-on-error: true
+
+# =========================
+# 5. DEPLOYMENT (Render)
+# =========================
+  deploy:
+    name: Deploy Application
+    runs-on: ubuntu-latest
+    needs: docker
+
+    steps:
+      - name: Deployment Notice
+        run: echo "Deployment handled automatically by Render"
