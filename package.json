@@ -1,15 +1,13 @@
 {
-  "name": "bmw-property-bank-app",
+  "name": "banks-management-system",
   "version": "1.0.0",
-  "description": "Intentionally vulnerable banking app for security testing",
+  "description": "Secure CI/CD banking web application",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "serve": "npm run start",
-    "test": "echo \"no tests\""
+    "serve": "node server.js"
   },
   "dependencies": {
-    "body-parser": "^1.20.4",
-    "express": "^4.22.1"
+    "express": "^4.18.2"
   }
 }

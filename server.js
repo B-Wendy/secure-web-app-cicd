@@ -2,12 +2,14 @@ const express = require("express");
 const path = require("path");
 
 const app = express();
+
+// Port provided by Render / Docker / local
 const PORT = process.env.PORT || 3000;
 
-// Serve frontend
+// Serve static frontend files
 app.use(express.static(path.join(__dirname, "public")));
 
-// Simulated bank data
+// Simulated banking data
 const account = {
   bankName: "BMW's Property Bank",
   accountHolder: "Demo Customer",
@@ -22,13 +24,13 @@ const account = {
 
 // API endpoint
 app.get("/api/account", (req, res) => {
-  const interest = account.balance * account.interestRate;
+  const interestEarned = account.balance * account.interestRate;
 
   res.json({
     bankName: account.bankName,
     accountHolder: account.accountHolder,
     balance: account.balance,
-    interestEarned: interest,
+    interestEarned,
     transactions: account.transactions
   });
 });
