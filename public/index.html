@@ -1,10 +1,83 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>BMW's property Bank</title>
+  <meta charset="UTF-8" />
+  <title>BMW's Property Bank</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      padding: 20px;
+    }
+    h1 {
+      color: #003366;
+    }
+    .card {
+      background: #ffffff;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 6px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 10px;
+      border-bottom: 1px solid #ddd;
+    }
+    th {
+      background: #003366;
+      color: #fff;
+    }
+  </style>
 </head>
 <body>
-  <h1>BMW's Bank</h1>
-  <p>Welcome to e-banking system</p>
+
+  <h1>BMW's Property Bank</h1>
+
+  <div class="card">
+    <h2>Account Summary</h2>
+    <p><strong>Account Holder:</strong> <span id="holder"></span></p>
+    <p><strong>Balance:</strong> ₦<span id="balance"></span></p>
+    <p><strong>Interest Earned:</strong> ₦<span id="interest"></span></p>
+  </div>
+
+  <div class="card">
+    <h2>Transaction History</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Type</th>
+          <th>Amount</th>
+        </tr>
+      </thead>
+      <tbody id="transactions"></tbody>
+    </table>
+  </div>
+
+<script>
+  fetch("/api/account")
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById("holder").textContent = data.accountHolder;
+      document.getElementById("balance").textContent = data.balance.toLocaleString();
+      document.getElementById("interest").textContent = data.interestEarned.toLocaleString();
+
+      const table = document.getElementById("transactions");
+      data.transactions.forEach(tx => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${tx.date}</td>
+          <td>${tx.type}</td>
+          <td>₦${tx.amount.toLocaleString()}</td>
+        `;
+        table.appendChild(row);
+      });
+    });
+</script>
+
 </body>
 </html>

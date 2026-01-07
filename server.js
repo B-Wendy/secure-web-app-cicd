@@ -2,22 +2,38 @@ const express = require("express");
 const path = require("path");
 
 const app = express();
-
-// Render / Docker provides PORT
 const PORT = process.env.PORT || 3000;
 
 // Serve frontend
 app.use(express.static(path.join(__dirname, "public")));
 
-app.get("/api/balance", (req, res) => {
+// Simulated bank data
+const account = {
+  bankName: "BMW's Property Bank",
+  accountHolder: "Demo Customer",
+  balance: 250000,
+  interestRate: 0.045,
+  transactions: [
+    { date: "2025-12-01", type: "Deposit", amount: 100000 },
+    { date: "2025-12-05", type: "Withdrawal", amount: 50000 },
+    { date: "2025-12-10", type: "Withdrawal", amount: 25000 }
+  ]
+};
+
+// API endpoint
+app.get("/api/account", (req, res) => {
+  const interest = account.balance * account.interestRate;
+
   res.json({
-    appName: "BMW's Property",
-    balance: 250000,
-    lastWithdrawal: "2025-12-10",
-    interestRate: "4.5%"
+    bankName: account.bankName,
+    accountHolder: account.accountHolder,
+    balance: account.balance,
+    interestEarned: interest,
+    transactions: account.transactions
   });
 });
 
-app.listen(PORT, () => {
+// Start server (Docker & cloud safe)
+app.listen(PORT, "0.0.0.0", () => {
   console.log(`Server running on port ${PORT}`);
 });
