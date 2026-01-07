@@ -1,13 +1,12 @@
 {
-  "name": "banks-management-system",
+  "name": "bank-management-system",
   "version": "1.0.0",
-  "description": "Secure CI/CD banking web application",
+  "description": "Banking system demo for secure CI/CD",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "serve": "node server.js"
+    "start": "node server.js"
   },
   "dependencies": {
-    "express": "^4.18.2"
+    "express": "^4.19.2"
   }
 }
