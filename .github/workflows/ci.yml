@@ -1,21 +1,21 @@
-name: Secure CI/CD Pipeline – Banking App
+name: Secure CI/CD Pipeline – Banking Application
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
   build:
-    name: Build Application
+    name: Build Phase
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 18
@@ -23,29 +23,25 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Run application build check
-        run: npm start &
-        env:
-          CI: true
+      - name: Start application (sanity check)
+        run: |
+          npm start &
+          sleep 5
 
   dependency-scan:
-    name: Dependency Security Scan (Snyk)
+    name: Dependency Security Scan (npm audit)
     runs-on: ubuntu-latest
     needs: build
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout source code
+        uses: actions/checkout@v4
 
       - name: Install dependencies
         run: npm install
 
-      - name: Run Snyk dependency scan
-        uses: snyk/actions/node@v3
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          args: --severity-threshold=high
-        continue-on-error: true
+      - name: Run npm audit (non-blocking)
+        run: npm audit --audit-level=high || true
 
   image-scan:
     name: Docker Image Scan (Trivy)
@@ -53,7 +49,8 @@ jobs:
     needs: dependency-scan
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout source code
+        uses: actions/checkout@v4
 
       - name: Build Docker image
         run: docker build -t bank-management-system .
@@ -66,12 +63,12 @@ jobs:
           exit-code: 0
 
   dynamic-scan:
-    name: Dynamic Scan (OWASP ZAP)
+    name: Dynamic Application Scan (OWASP ZAP)
     runs-on: ubuntu-latest
     needs: image-scan
 
     steps:
-      - name: OWASP ZAP Baseline Scan
+      - name: Run OWASP ZAP baseline scan
         uses: zaproxy/action-baseline@v0.11.0
         with:
           target: https://example.com
