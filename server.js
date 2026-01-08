@@ -2,40 +2,60 @@ const express = require("express");
 const path = require("path");
 
 const app = express();
-
-// IMPORTANT: Render injects PORT
 const PORT = process.env.PORT || 3000;
 
-// Serve frontend
+app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
-// Simulated banking data
-const account = {
-  accountName: "BMW Property Account",
+/* In-memory database (simulates real bank data) */
+let account = {
+  owner: "BMW's Property",
   balance: 250000,
-  interestRate: 0.045,
+  interestRate: 4.5,
   transactions: [
-    { date: "2025-12-01", type: "Deposit", amount: 100000 },
-    { date: "2025-12-10", type: "Withdrawal", amount: 50000 },
-    { date: "2025-12-20", type: "Deposit", amount: 200000 }
+    { type: "deposit", amount: 50000, date: "2025-12-01" },
+    { type: "withdrawal", amount: 20000, date: "2025-12-10" }
   ]
 };
 
-// API endpoints
+/* API: Get account details */
 app.get("/api/account", (req, res) => {
-  const yearlyInterest = account.balance * account.interestRate;
+  res.json(account);
+});
 
-  res.json({
-    ...account,
-    yearlyInterest
+/* API: Deposit */
+app.post("/api/deposit", (req, res) => {
+  const { amount } = req.body;
+  account.balance += amount;
+  account.transactions.push({
+    type: "deposit",
+    amount,
+    date: new Date().toISOString().split("T")[0]
   });
+  res.json({ success: true, account });
 });
 
-// Health check (important for CI/CD & Render)
-app.get("/health", (req, res) => {
-  res.status(200).send("OK");
+/* API: Withdraw */
+app.post("/api/withdraw", (req, res) => {
+  const { amount } = req.body;
+  if (amount > account.balance) {
+    return res.status(400).json({ error: "Insufficient funds" });
+  }
+  account.balance -= amount;
+  account.transactions.push({
+    type: "withdrawal",
+    amount,
+    date: new Date().toISOString().split("T")[0]
+  });
+  res.json({ success: true, account });
 });
 
-app.listen(PORT, "0.0.0.0", () => {
+/* API: Interest calculation */
+app.get("/api/interest", (req, res) => {
+  const interest = (account.balance * account.interestRate) / 100;
+  res.json({ interest });
+});
+
+app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

@@ -1,34 +1,49 @@
-async function fetchMessages() {
-  const res = await fetch('/api/messages');
-  const json = await res.json();
-  const container = document.getElementById('messages');
-  container.innerHTML = '';
-  if (!json.messages || json.messages.length === 0) {
-    container.textContent = 'No messages yet.';
-    return;
-  }
-  json.messages.slice().reverse().forEach(m => {
-    const d = document.createElement('div');
-    d.className = 'msg';
-    d.textContent = m.text;
-    container.appendChild(d);
+async function loadAccount() {
+  const res = await fetch("/api/account");
+  const data = await res.json();
+
+  document.getElementById("owner").textContent = data.owner;
+  document.getElementById("balance").textContent = data.balance;
+  document.getElementById("rate").textContent = data.interestRate;
+
+  const list = document.getElementById("transactions");
+  list.innerHTML = "";
+  data.transactions.forEach(tx => {
+    const li = document.createElement("li");
+    li.textContent = `${tx.date} - ${tx.type.toUpperCase()} - $${tx.amount}`;
+    list.appendChild(li);
   });
 }
 
-document.getElementById('send').addEventListener('click', async () => {
-  const txt = document.getElementById('text').value.trim();
-  if (!txt) return alert('Type something first');
-  const res = await fetch('/api/messages', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ text: txt })
+async function deposit() {
+  const amount = Number(document.getElementById("amount").value);
+  await fetch("/api/deposit", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ amount })
   });
-  if (!res.ok) {
-    const j = await res.json().catch(()=>({error:'unknown'}));
-    return alert('Error: ' + (j.error || res.status));
-  }
-  document.getElementById('text').value = '';
-  fetchMessages();
-});
+  loadAccount();
+}
 
-fetchMessages();
+async function withdraw() {
+  const amount = Number(document.getElementById("amount").value);
+  const res = await fetch("/api/withdraw", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ amount })
+  });
+
+  if (!res.ok) {
+    alert("Insufficient funds");
+  }
+  loadAccount();
+}
+
+async function calculateInterest() {
+  const res = await fetch("/api/interest");
+  const data = await res.json();
+  document.getElementById("interest").textContent =
+    `Estimated Interest: $${data.interest.toFixed(2)}`;
+}
+
+loadAccount();

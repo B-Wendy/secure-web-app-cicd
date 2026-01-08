@@ -1,7 +1,7 @@
 {
   "name": "bank-management-system",
   "version": "1.0.0",
-  "description": "Banking system demo for secure CI/CD",
+  "description": "Interactive banking system for secure CI/CD demonstration",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
