@@ -1,12 +1,15 @@
-FROM node:18-alpine
+FROM python:3.11-slim
 
 WORKDIR /app
 
-COPY package*.json ./
-RUN npm install --omit=dev
-
+# Copy all files into the container
 COPY . .
 
-EXPOSE 3000
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
 
-CMD ["node", "server.js"]
+# Expose the port Render expects
+EXPOSE 10000
+
+# Run your Flask app
+CMD ["flask", "--app", "app.app", "run", "--host=0.0.0.0", "--port=10000"]
