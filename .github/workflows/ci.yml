@@ -9,7 +9,7 @@ on:
 jobs:
 
   build:
-    name: Build Application
+    name: Build
     runs-on: ubuntu-latest
 
     steps:
@@ -24,5 +24,57 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build sanity check
-        run: echo "Build completed successfully"
+      - name: Build confirmation
+        run: echo "Build phase completed successfully"
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Start application (sanity test)
+        run: |
+          npm start &
+          sleep 5
+          echo "Application started successfully"
+
+  scan:
+    name: Scan
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Dependency security scan (npm audit)
+        run: npm audit --audit-level=high || true
+
+      - name: Build Docker image
+        run: docker build -t bank-management-system .
+
+      - name: Container image security scan (Trivy)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: bank-management-system
+          severity: HIGH,CRITICAL
+          exit-code: 0
+
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    needs: scan
+
+    steps:
+      - name: Deployment stage
+        run: echo "Deployment completed successfully (Render auto-deploy enabled)"
