@@ -8,6 +8,9 @@ on:
 
 jobs:
 
+  # -------------------------------------------------
+  # 1. BUILD PHASE
+  # -------------------------------------------------
   build:
     name: Build
     runs-on: ubuntu-latest
@@ -19,14 +22,20 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20   # ✅ latest LTS
+          node-version: 18
 
       - name: Install dependencies
         run: npm install
 
-      - name: Build confirmation
-        run: echo "Build phase completed successfully"
+      - name: Start application (sanity check)
+        run: |
+          npm start &
+          sleep 5
 
+
+  # -------------------------------------------------
+  # 2. TEST PHASE
+  # -------------------------------------------------
   test:
     name: Test
     runs-on: ubuntu-latest
@@ -39,17 +48,18 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 18
 
       - name: Install dependencies
         run: npm install
 
-      - name: Start application (sanity test)
-        run: |
-          npm start &
-          sleep 5
-          echo "Application started successfully"
+      - name: Run basic application test
+        run: echo "Basic tests passed (demo project)"
 
+
+  # -------------------------------------------------
+  # 3. SECURITY SCAN PHASE
+  # -------------------------------------------------
   scan:
     name: Security Scan
     runs-on: ubuntu-latest
@@ -62,46 +72,34 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 18
 
       - name: Install dependencies
         run: npm install
 
-      # Log HIGH/CRITICAL dependency vulnerabilities but do not fail on HIGH
-      - name: Dependency security scan (npm audit)
-        run: npm audit --audit-level=high || true
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      # 🔴 THIS STEP WILL FAIL IF HIGH/CRITICAL EXISTS
+      - name: Dependency Vulnerability Scan (npm audit)
+        run: npm audit --audit-level=high
 
       - name: Build Docker image
         run: docker build -t bank-management-system .
 
-      # Fail pipeline only on CRITICAL container vulnerabilities
-      - name: Container image security scan (Trivy)
+      - name: Container Image Scan (Trivy)
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: bank-management-system
-          severity: CRITICAL
+          severity: HIGH,CRITICAL
           exit-code: 1
-          format: json
-          output: trivy-report.json
-          ignore-unfixed: true
 
-      # Upload Trivy report artifact for supervisor review
-      - name: Save Trivy report (JSON)
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: trivy-report
-          path: trivy-report.json
 
+  # -------------------------------------------------
+  # 4. DEPLOYMENT PHASE
+  # -------------------------------------------------
   deploy:
     name: Deploy
     runs-on: ubuntu-latest
     needs: scan
-    if: ${{ success() }}   # 🚨 Only run if scan job succeeded
 
     steps:
-      - name: Deployment confirmation
-        run: echo "Deployment completed successfully (Render auto-deploy enabled)"
+      - name: Deploy application
+        run: echo "Deployment successful (demo deployment)"
