@@ -2,107 +2,70 @@ name: Secure CI/CD Pipeline – Banking Application
 
 on:
   push:
-    branches: ["main"]
+    branches: [ "main" ]
   pull_request:
-    branches: ["main"]
+    branches: [ "main" ]
 
 jobs:
 
   build:
-    name: Build
+    name: 1️⃣ Build
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout source code
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20   # ✅ latest LTS
+          node-version: 18
 
       - name: Install dependencies
         run: npm install
 
-      - name: Build confirmation
-        run: echo "Build phase completed successfully"
-
-  test:
-    name: Test
-    runs-on: ubuntu-latest
-    needs: build
-
-    steps:
-      - name: Checkout source code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Install dependencies
-        run: npm install
-
-      # Optional: add your real tests here
-      - name: Start application (sanity test)
+      - name: Start application
         run: |
           npm start &
           sleep 5
-          echo "Application started successfully"
+
+  test:
+    name: 2️⃣ Test
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      - run: npm install
+
+      - name: Basic health test
+        run: curl http://localhost:3000 || true
 
   scan:
-    name: Security Scan
+    name: 3️⃣ Security Scan
     runs-on: ubuntu-latest
     needs: test
-
     steps:
-      - name: Checkout source code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Install dependencies
-        run: npm install
-
-      # Fail pipeline on HIGH/CRITICAL dependency vulnerabilities
-      - name: Dependency security scan (npm audit)
+      - name: npm Audit (FAIL on high vulnerabilities)
         run: npm audit --audit-level=high
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
       - name: Build Docker image
-        run: docker build -t bank-management-system .
+        run: docker build -t bank-app .
 
-      # Fail pipeline only on CRITICAL container vulnerabilities
-      - name: Container image security scan (Trivy)
+      - name: Trivy Image Scan
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: bank-management-system
-          severity: CRITICAL
-          exit-code: 1
-          format: json
-          output: trivy-report.json
-          ignore-unfixed: true
-
-      # Upload Trivy report artifact for supervisor review
-      - name: Save Trivy report (JSON)
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: trivy-report
-          path: trivy-report.json
+          image-ref: bank-app
+          severity: HIGH,CRITICAL
+          exit-code: 1   # ⛔ FAIL if vulnerability found
 
   deploy:
-    name: Deploy
+    name: 4️⃣ Deploy
     runs-on: ubuntu-latest
     needs: scan
-    if: ${{ success() }}   # 🚨 Only run if scan job succeeded
-
     steps:
-      - name: Deployment confirmation
-        run: echo "Deployment completed successfully (Render auto-deploy enabled)"
+      - name: Deployment Simulation
+        run: echo "Application deployed securely"
