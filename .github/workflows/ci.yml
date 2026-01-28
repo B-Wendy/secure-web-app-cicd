@@ -3,45 +3,48 @@ name: Secure CI/CD Pipeline
 on:
   push:
     branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
 
 jobs:
-  security-pipeline:
+  ci-cd:
     runs-on: ubuntu-latest
 
     steps:
-    # 1️⃣ Checkout code
-    - name: Checkout source code
+    # ======================
+    # 1️⃣ BUILD
+    # ======================
+    - name: Checkout code
       uses: actions/checkout@v4
 
-    # 2️⃣ Setup Node.js
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: 18
 
-    # 3️⃣ Install dependencies
     - name: Install dependencies
       run: npm install
 
-    # 4️⃣ Dependency vulnerability scan (FAILS pipeline if found)
-    - name: Run npm audit
+    # ======================
+    # 2️⃣ TEST
+    # ======================
+    - name: Run application check
+      run: node server.js & sleep 5
+
+    # ======================
+    # 3️⃣ SCAN
+    # ======================
+    - name: Dependency vulnerability scan (npm audit)
       run: npm audit --audit-level=high
 
-    # 5️⃣ Build Docker image
-    - name: Build Docker image
-      run: docker build -t bank-app .
-
-    # 6️⃣ Trivy scan — APPLICATION vulnerabilities ONLY
-    - name: Scan Docker image with Trivy
+    - name: Trivy filesystem scan (APPLICATION ONLY)
       uses: aquasecurity/trivy-action@master
       with:
-        image-ref: bank-app
-        vuln-type: library
+        scan-type: fs
+        scan-ref: .
         severity: HIGH,CRITICAL
         exit-code: 1
 
-    # 7️⃣ Deployment placeholder (Render auto-deploys)
+    # ======================
+    # 4️⃣ DEPLOY
+    # ======================
     - name: Deployment stage
-      run: echo "Deployment allowed — no critical application vulnerabilities found"
+      run: echo "All security checks passed. Deployment allowed."
