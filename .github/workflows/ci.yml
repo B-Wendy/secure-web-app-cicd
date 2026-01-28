@@ -7,12 +7,13 @@ on:
     branches: ["main"]
 
 jobs:
+
   build:
-    name: Build Application
+    name: 1️⃣ Build Application
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Source Code
+      - name: Checkout source code
         uses: actions/checkout@v4
 
       - name: Setup Node.js
@@ -20,58 +21,53 @@ jobs:
         with:
           node-version: 18
 
-      - name: Install Dependencies
+      - name: Install dependencies
         run: npm install
 
-      - name: Start Application (Sanity Check)
+      - name: Start application (sanity check)
         run: |
           npm start &
           sleep 5
 
   dependency-scan:
-    name: Dependency Security Scan (npm audit)
+    name: 2️⃣ Dependency Security Scan (npm audit)
     runs-on: ubuntu-latest
     needs: build
 
     steps:
-      - name: Checkout Source Code
+      - name: Checkout source code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 18
-
-      - name: Install Dependencies
+      - name: Install dependencies
         run: npm install
 
-      - name: Run npm audit (FAIL on HIGH & CRITICAL)
+      - name: Run npm audit (BLOCK on HIGH/CRITICAL)
         run: npm audit --audit-level=high
 
   image-scan:
-    name: Container Image Scan (Trivy)
+    name: 3️⃣ Docker Image Scan (Trivy)
     runs-on: ubuntu-latest
     needs: dependency-scan
 
     steps:
-      - name: Checkout Source Code
+      - name: Checkout source code
         uses: actions/checkout@v4
 
-      - name: Build Docker Image
+      - name: Build Docker image
         run: docker build -t bank-management-system .
 
-      - name: Scan Docker Image with Trivy
+      - name: Scan Docker image with Trivy
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: bank-management-system
           severity: HIGH,CRITICAL
-          exit-code: 0
+          exit-code: 1
 
   deploy:
-    name: Deployment Stage
+    name: 4️⃣ Deployment (Only if ALL Security Checks Pass)
     runs-on: ubuntu-latest
     needs: image-scan
 
     steps:
-      - name: Deployment Simulation
-        run: echo "Application deployed successfully (simulation)"
+      - name: Deployment Gate
+        run: echo "✅ All security checks passed. Ready for deployment."
