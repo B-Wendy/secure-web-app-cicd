@@ -8,7 +8,6 @@
   },
   "dependencies": {
     "express": "^4.18.2",
-    "lodash": "^4.17.21",
-    "serialize-javascript": "^7.0.2"
+    "serialize-javascript": "^2.1.1"
   }
 }
