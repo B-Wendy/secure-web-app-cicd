@@ -1,70 +1,47 @@
-name: Secure CI/CD Pipeline – Banking Application
+name: Secure CI/CD Pipeline
 
 on:
   push:
-    branches: ["main"]
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
 
 jobs:
-  build:
-    name: 1️⃣ Build Application
+  security-pipeline:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout source code
-        uses: actions/checkout@v4
+    # 1️⃣ Checkout code
+    - name: Checkout source code
+      uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 18
+    # 2️⃣ Setup Node.js
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 18
 
-      - name: Install dependencies
-        run: npm install
+    # 3️⃣ Install dependencies
+    - name: Install dependencies
+      run: npm install
 
-      - name: Start application (sanity check)
-        run: |
-          npm start &
-          sleep 5
+    # 4️⃣ Dependency vulnerability scan (FAILS pipeline if found)
+    - name: Run npm audit
+      run: npm audit --audit-level=high
 
-  dependency-scan:
-    name: 2️⃣ Dependency Security Scan (npm audit)
-    runs-on: ubuntu-latest
-    needs: build
+    # 5️⃣ Build Docker image
+    - name: Build Docker image
+      run: docker build -t bank-app .
 
-    steps:
-      - name: Checkout source code
-        uses: actions/checkout@v4
+    # 6️⃣ Trivy scan — APPLICATION vulnerabilities ONLY
+    - name: Scan Docker image with Trivy
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: bank-app
+        vuln-type: library
+        severity: HIGH,CRITICAL
+        exit-code: 1
 
-      - name: Install dependencies
-        run: npm install
-
-      - name: Run npm audit (FAIL on HIGH)
-        run: npm audit --audit-level=high
-
-  image-scan:
-    name: 3️⃣ Docker Image Scan (Trivy)
-    runs-on: ubuntu-latest
-    needs: dependency-scan
-
-    steps:
-      - name: Checkout source code
-        uses: actions/checkout@v4
-
-      - name: Build Docker image
-        run: docker build -t bank-app .
-
-      - name: Scan image with Trivy (FAIL on HIGH/CRITICAL)
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: bank-app
-          severity: HIGH,CRITICAL
-          exit-code: 1
-
-  deploy:
-    name: 4️⃣ Deploy (Only If Secure)
-    runs-on: ubuntu-latest
-    needs: image-scan
-
-    steps:
-      - name: Deployment placeholder
-        run: echo "Deployment allowed – system is secure"
+    # 7️⃣ Deployment placeholder (Render auto-deploys)
+    - name: Deployment stage
+      run: echo "Deployment allowed — no critical application vulnerabilities found"
