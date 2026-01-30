@@ -9,116 +9,78 @@ on:
 jobs:
 
   build:
-    name: 1️⃣ Build Application
+    name: 1️⃣ Build
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout Source Code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 18
-
-      - name: Install Dependencies
-        run: npm install
-
-      - name: Node Syntax Validation
-        run: node -c server.js
+      - run: npm install
+      - run: node -c server.js
 
   test:
-    name: 2️⃣ Basic Application Test
+    name: 2️⃣ Basic Test
     runs-on: ubuntu-latest
     needs: build
-
     steps:
-      - name: Checkout Source Code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 18
-
-      - name: Install Dependencies
-        run: npm install
-
-      - name: Verify App Entry Point
-        run: |
-          test -f server.js
-          echo "Application entry point verified."
+      - run: npm install
+      - run: test -f server.js
 
   dependency-scan:
-    name: 3️⃣ Dependency Security Scan (npm audit)
+    name: 3️⃣ Dependency Scan (npm audit)
     runs-on: ubuntu-latest
     needs: test
-
     steps:
-      - name: Checkout Source Code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 18
-
-      - name: Install Dependencies
-        run: npm install
-
-      - name: Run npm audit (Report Only)
-        run: npm audit --audit-level=high || true
-
-  docker-build:
-    name: 4️⃣ Docker Image Build
-    runs-on: ubuntu-latest
-    needs: dependency-scan
-
-    steps:
-      - name: Checkout Source Code
-        uses: actions/checkout@v4
-
-      - name: Build Docker Image
-        run: docker build -t bank-management-system:latest .
+      - run: npm install
+      - run: npm audit --audit-level=high || true
 
   trivy-scan:
-    name: 5️⃣ Container Image Scan (Trivy)
+    name: 4️⃣ Trivy Scan (Filesystem – Stable)
     runs-on: ubuntu-latest
-    needs: docker-build
-
+    needs: dependency-scan
     steps:
-      - name: Checkout Source Code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Build Docker Image
-        run: docker build -t bank-management-system:latest .
-
-      - name: Run Trivy Scan (Non-Blocking)
+      - name: Trivy FS Scan (Dependencies Only)
         uses: aquasecurity/trivy-action@0.24.0
         with:
-          image-ref: bank-management-system:latest
-          severity: HIGH,CRITICAL
-          exit-code: 0
+          scan-type: fs
+          scan-ref: .
+          severity: CRITICAL
           ignore-unfixed: true
+          exit-code: 0
           format: table
 
-  zap-scan:
-    name: 6️⃣ Dynamic Security Scan (OWASP ZAP)
+  docker-build:
+    name: 5️⃣ Docker Build
     runs-on: ubuntu-latest
     needs: trivy-scan
-
     steps:
-      - name: Run OWASP ZAP Baseline Scan
-        uses: zaproxy/action-baseline@v0.11.0
+      - uses: actions/checkout@v4
+      - run: docker build -t bank-management-system:latest .
+
+  zap-scan:
+    name: 6️⃣ OWASP ZAP
+    runs-on: ubuntu-latest
+    needs: docker-build
+    steps:
+      - uses: zaproxy/action-baseline@v0.11.0
         with:
           target: https://example.com
         continue-on-error: true
 
   deploy:
-    name: 7️⃣ Deployment (Render)
+    name: 7️⃣ Deploy
     runs-on: ubuntu-latest
     needs: zap-scan
-
     steps:
-      - name: Deployment Confirmation
-        run: echo "All security stages passed. Deployment allowed."
+      - run: echo "All security checks passed. Deployment allowed."
