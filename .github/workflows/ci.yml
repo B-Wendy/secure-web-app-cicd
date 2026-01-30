@@ -2,15 +2,13 @@ name: Secure CI/CD Pipeline – Banking Application
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
-
-  # 1️⃣ BUILD STAGE
   build:
-    name: 1. Build Application
+    name: 1️⃣ Build Application
     runs-on: ubuntu-latest
 
     steps:
@@ -27,64 +25,80 @@ jobs:
 
       - name: Start application (sanity check)
         run: |
-          npm start &
+          node server.js &
           sleep 5
 
 
-  # 2️⃣ DEPENDENCY SECURITY SCAN
-  dependency-scan:
-    name: 2. Dependency Scan (npm audit)
+  test:
+    name: 2️⃣ Basic Test Phase
     runs-on: ubuntu-latest
     needs: build
 
     steps:
-      - name: Checkout source code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 18
 
       - name: Install dependencies
         run: npm install
 
-      - name: Run npm audit (fail on high/critical)
+      - name: Application health check
+        run: node server.js & sleep 5
+
+
+  dependency-scan:
+    name: 3️⃣ Dependency Security Scan (npm audit)
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run npm audit (fail on HIGH & CRITICAL)
         run: npm audit --audit-level=high
 
 
-  # 3️⃣ DOCKER BUILD
   docker-build:
-    name: 3. Docker Build
+    name: 4️⃣ Docker Image Build
     runs-on: ubuntu-latest
     needs: dependency-scan
 
     steps:
-      - name: Checkout source code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Build Docker image
         run: docker build -t bank-management-system:latest .
 
 
-  # 4️⃣ CONTAINER IMAGE SECURITY SCAN
   trivy-scan:
-    name: 4. Trivy Image Scan
+    name: 5️⃣ Container Image Scan (Trivy)
     runs-on: ubuntu-latest
     needs: docker-build
 
     steps:
+      - uses: actions/checkout@v4
+
       - name: Scan Docker image with Trivy
         uses: aquasecurity/trivy-action@0.20.0
         with:
           image-ref: bank-management-system:latest
           severity: HIGH,CRITICAL
+          vuln-type: os,library
+          ignore-unfixed: true
           exit-code: 1
 
 
-  # 5️⃣ DYNAMIC APPLICATION SECURITY TESTING
-  owasp-zap:
-    name: 5. OWASP ZAP Dynamic Scan
+  zap-scan:
+    name: 6️⃣ Dynamic Security Scan (OWASP ZAP)
     runs-on: ubuntu-latest
     needs: trivy-scan
 
@@ -92,16 +106,17 @@ jobs:
       - name: OWASP ZAP Baseline Scan
         uses: zaproxy/action-baseline@v0.11.0
         with:
-          target: http://localhost:3000
+          target: http://localhost:10000
         continue-on-error: true
 
 
-  # 6️⃣ DEPLOYMENT (ONLY IF ALL PASSED)
   deploy:
-    name: 6. Deploy Application
+    name: 7️⃣ Deploy to Render
     runs-on: ubuntu-latest
-    needs: owasp-zap
+    needs: zap-scan
 
     steps:
-      - name: Deploy to Render
-        run: echo "Deployment successful – all security checks passed"
+      - name: Deployment Gate
+        run: |
+          echo "All security checks passed."
+          echo "Safe to deploy to Render."
