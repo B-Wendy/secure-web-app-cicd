@@ -96,4 +96,4 @@ jobs:
     runs-on: ubuntu-latest
     needs: zap-scan
     steps:
-      - run: echo "✔ All stages passed. Deployment permitted."
+      - run: echo " All stages passed. Deployment permitted."
