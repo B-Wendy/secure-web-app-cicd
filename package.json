@@ -1,0 +1,13 @@
+{
+  "name": "bank-management-system",
+  "version": "1.0.0",
+  "description": "Interactive banking system for secure CI/CD demonstration",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "serialize-javascript": "^7.0.2"
+  }
+}

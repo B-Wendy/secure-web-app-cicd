@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Bank Management System</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <header>
+    <h1>BMW's Property – Banking Dashboard</h1>
+  </header>
+
+  <main>
+    <section class="card">
+      <h2>Account Overview</h2>
+      <p><strong>Owner:</strong> <span id="owner"></span></p>
+      <p><strong>Balance:</strong> $<span id="balance"></span></p>
+      <p><strong>Interest Rate:</strong> <span id="rate"></span>%</p>
+      <button onclick="calculateInterest()">Calculate Interest</button>
+      <p id="interest"></p>
+    </section>
+
+    <section class="card">
+      <h2>Transactions</h2>
+      <ul id="transactions"></ul>
+    </section>
+
+    <section class="card">
+      <h2>Actions</h2>
+      <input type="number" id="amount" placeholder="Enter amount" />
+      <button onclick="deposit()">Deposit</button>
+      <button onclick="withdraw()">Withdrawal</button>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
